@@ -25,6 +25,7 @@ ENV['RUBYLIB'].split(':').each do |rubylib_path|
   end
 end
 require 'ros/node'
+require 'ros/package'
 
 # ensure shutdown all nodes
 END {ROS::Node.shutdown_all_nodes}
