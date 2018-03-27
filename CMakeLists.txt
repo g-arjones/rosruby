@@ -22,7 +22,7 @@ catkin_add_env_hooks(${PROJECT_NAME} SHELLS sh DIRECTORY ${CMAKE_CURRENT_SOURCE_
 
 file(MAKE_DIRECTORY ${ROSRUBY_DEVEL_LIB_DESTINATION})
 
-rosruby_generate_messages(std_msgs rosgraph_msgs)
+rosruby_generate_messages(std_msgs rosgraph_msgs geometry_msgs nav_msgs roscpp_tutorials)
 
 install(PROGRAMS
   bin/rubyroscore

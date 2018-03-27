@@ -31,7 +31,8 @@
 
   <run_depend>roslang</run_depend>
   <run_depend>rosgraph_msgs</run_depend>
-
+  <run_depend>gserver</run_depend>
+  <run_depend>yard</run_depend>
   <export>
   </export>
 </package>
