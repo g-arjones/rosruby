@@ -28,7 +28,7 @@ module ROS::TCPROS
       len = msg.serialize(sio)
       sio.rewind
       data = sio.read
-      len = data.length
+      len = sio.size
       data = [len, data].pack("La#{len}")
       socket.write(data)
       data
