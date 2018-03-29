@@ -70,7 +70,7 @@ module ROS::TCPROS
       read_header(@socket)
       @thread = Thread.start do
         while @is_running
-          data = read_all(@socket) if IO.select([@socket], [], [], 1)
+          data = read_all(@socket)
           next if data.empty?
           msg = @topic_type.new
           msg.deserialize(data)
