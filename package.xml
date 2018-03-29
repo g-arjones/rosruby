@@ -19,6 +19,8 @@
   <build_depend>message_generation</build_depend>
   <build_depend>rosgraph_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
 
   <build_depend>ruby</build_depend>
   <build_depend>rake</build_depend>
@@ -28,9 +30,10 @@
   <run_depend>rosmsg</run_depend>
   <run_depend>rosgraph_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
 
   <run_depend>roslang</run_depend>
-  <run_depend>rosgraph_msgs</run_depend>
   <run_depend>gserver</run_depend>
   <run_depend>yard</run_depend>
   <export>
