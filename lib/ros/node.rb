@@ -278,8 +278,8 @@ module ROS
     ##
     # spin once. This invoke subscription/service_server callbacks
     #
-    def spin_once
-      @manager.spin_once
+    def spin_once(timeout = 0)
+      @manager.spin_once(timeout)
     end
 
     ##
@@ -287,8 +287,7 @@ module ROS
     #
     def spin
       while ok?
-        spin_once
-        sleep(0.01)
+        spin_once(nil)
       end
     end
 

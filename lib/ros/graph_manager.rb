@@ -186,11 +186,18 @@ module ROS
       publisher
     end
 
+    def subscribers_ios
+      @subscribers.map(&:watched_ios).flatten
+    end
+
     ##
     # process all messages of subscribers.
     # This means that callbacks for all queued messages are called.
     # @return [Bool] some message has come or not.
-    def spin_once
+    def spin_once(timeout = 0)
+      r, _, _ = IO.select(subscribers_ios, nil, nil, timeout)
+      r.each { |pipe| pipe.read(1) } if r
+
       results = @subscribers.map {|subscriber| subscriber.process_queue}
       results.include?(true)
     end
@@ -279,6 +286,7 @@ module ROS
 
       begin
         @subscribers.each do |subscriber|
+          subscriber.wakeup!
           @master.unregister_subscriber(subscriber.topic_name)
           subscriber.close
         end

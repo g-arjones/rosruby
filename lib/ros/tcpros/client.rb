@@ -43,6 +43,7 @@ module ROS::TCPROS
       end
       @byte_received = 0
       @is_running = true
+      @rd, @wr = IO.pipe
     end
 
     ##
@@ -79,8 +80,13 @@ module ROS::TCPROS
           msg.deserialize(data)
           @byte_received += data.length
           @msg_queue.push(msg)
+          activity!
         end
       end
+    end
+
+    def activity!
+      @wr.write(1)
     end
 
     ##
@@ -88,6 +94,15 @@ module ROS::TCPROS
     # kill the thread if it is not response.
     def shutdown
       @is_running = false
+
+      _rd = @rd
+      _wr = @wr
+      @rd = nil
+      @wr = nil
+      activity!
+      _rd.close
+      _wr.close
+
       if not @thread.join(0.1)
         Thread::kill(@thread)
       end
@@ -108,5 +123,7 @@ module ROS::TCPROS
     attr_reader :target_uri
     # @return [String] id for slave API
     attr_accessor :id
+    # @return [IO] the read end of a pipe to notify of activity
+    attr_reader :rd
   end
 end

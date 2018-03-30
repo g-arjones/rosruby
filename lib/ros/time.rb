@@ -95,6 +95,7 @@ module ROS
         end
         @@sim_thread = Thread.new do
           while node.ok?
+#            @@clock_subscriber.wait_for_activity
             @@clock_subscriber.process_queue
           end
         end

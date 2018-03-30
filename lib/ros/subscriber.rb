@@ -33,6 +33,7 @@ module ROS
       super(caller_id, topic_name, topic_type)
       @callback = callback
       @tcp_no_delay = tcp_no_delay
+      @rd, @wr = IO.pipe
     end
 
     # @return [Boolean] use tcp no delay option or not
@@ -41,10 +42,23 @@ module ROS
     # @return [Proc] callback of this subscription
     attr_reader :callback
 
+    def wait_for_activity(timeout = nil)
+      r, _, _ = IO.select(watched_ios, nil, nil, timeout)
+      r.each { |pipe| pipe.read(1) } if r
+    end
+
+    def wakeup!
+      @wr.write(1)
+    end
+
     # get number of publishers to this subscriber
     # @return [Integer] number of publishers
     def get_number_of_publishers
       @connections.length
+    end
+
+    def watched_ios
+      @connections.map(&:rd).concat([@rd]).compact
     end
 
     ##
@@ -86,6 +100,7 @@ module ROS
         connection.id = "#{@topic_name}_in_#{@connection_id_number}"
         @connection_id_number += 1
         @connections.push(connection)
+        wakeup!
         return connection
       rescue
 #	puts "request to #{uri} fail"
@@ -98,6 +113,7 @@ module ROS
     # @param [String] uri uri to connect
     def drop_connection(uri) #:nodoc:
       @connections.delete_if {|c| c.target_uri == uri}
+      wakeup!
     end
 
     ##
