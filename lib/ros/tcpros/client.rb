@@ -71,7 +71,10 @@ module ROS::TCPROS
       @thread = Thread.start do
         while @is_running
           data = read_all(@socket)
-          next if data.empty?
+          if data.empty?
+              shutdown
+              break
+          end
           msg = @topic_type.new
           msg.deserialize(data)
           @byte_received += data.length
