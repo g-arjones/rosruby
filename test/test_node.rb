@@ -56,6 +56,7 @@ class TestNode < Test::Unit::TestCase
     node1 = ROS::Node.new('/test_signal1')
     Process.kill("INT", Process.pid)
     sleep(0.5)
+    node1.spin_once
     assert(!node1.ok?)
   end
 

@@ -75,7 +75,7 @@ module ROS
         raise 'ROS_MASTER_URI is nos set. please check environment variables'
       end
 
-      @manager = GraphManager.new(@node_name, @master_uri, @host)
+      @manager = GraphManager.new(@node_name, @master_uri, @host, self)
       @parameter = ParameterManager.new(@master_uri, @node_name, @remappings)
 
       if not @manager.check_master_connection
@@ -93,6 +93,9 @@ module ROS
 
       # because xmlrpc server use signal trap, after serve, it have to trap sig      trap_signals
       ObjectSpace.define_finalizer(self, proc {|id| self.shutdown})
+
+      # use this pipe to notify IO#select
+      @rd, @wr = IO.pipe
     end
 
     ##
@@ -275,19 +278,46 @@ module ROS
       sub
     end
 
+    def activity_ios
+      @manager.subscribers.map(&:connections_ios).
+        concat([@rd]).flatten
+    end
+
+    def wait_for_activity(timeout = 0)
+      r, _, _ = IO.select(activity_ios, nil, nil, timeout)
+      return unless r
+      r.each do |pipe|
+        begin
+          pipe.read_nonblock(1)
+        rescue
+          # others might have already read
+        end
+      end
+    end
+
     ##
     # spin once. This invoke subscription/service_server callbacks
     #
     def spin_once(timeout = 0)
-      @manager.spin_once(timeout)
+      wait_for_activity(timeout)
+      message_come = @manager.spin_once
+
+      if @term_sig
+        ROS::Node.shutdown_all_nodes
+        @wr.close
+        @rd.close
+      end
+      message_come
     end
 
     ##
     # spin forever.
     #
-    def spin
+    def spin(&block)
+      timeout = block_given? ? 0 : nil
       while ok?
-        spin_once(nil)
+        yield if block_given?
+        spin_once(timeout)
       end
     end
 
@@ -303,6 +333,7 @@ module ROS
           puts 'ignoring errors while shutdown'
         end
       end
+      wakeup!
       self
     end
 
@@ -369,6 +400,11 @@ module ROS
       @manager.publishers.map do |pub|
         pub.topic_name
       end
+    end
+
+    # wakeup a sleeping node.
+    def wakeup! #:nodoc:
+      @wr.write(1)
     end
 
     private
@@ -440,7 +476,8 @@ module ROS
     def trap_signals  #:nodoc:
       ["INT", "TERM", "HUP"].each do |signal|
         Signal.trap(signal) do
-          ROS::Node.shutdown_all_nodes
+          @term_sig = true
+          wakeup!
         end
       end
     end

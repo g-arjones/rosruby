@@ -35,6 +35,8 @@ module ROS
     attr_reader :service_servers
     # @return [Array] all ParameterSubscriber of this node
     attr_reader :parameter_subscribers
+    # @return [ROS::Node] the node instance that owns this manager
+    attr_reader :node_instance
 
     ##
     # current running all nodes.
@@ -52,11 +54,12 @@ module ROS
     # @param [String] caller_id caller_id of this node
     # @param [String] master_uri URI of ROS Master
     # @param [String] host hostname of this node
-    def initialize(caller_id, master_uri, host)
+    def initialize(caller_id, master_uri, host, node_instance)
       @caller_id = caller_id
       @host = host
       @port = get_available_port
       @master_uri = master_uri
+      @node_instance = node_instance
       @is_ok = true
       @master = MasterProxy.new(@caller_id, @master_uri, get_uri)
       @server = XMLRPCServer.new(@port, @host)
@@ -186,18 +189,11 @@ module ROS
       publisher
     end
 
-    def subscribers_ios
-      @subscribers.map(&:watched_ios).flatten
-    end
-
     ##
     # process all messages of subscribers.
     # This means that callbacks for all queued messages are called.
     # @return [Bool] some message has come or not.
-    def spin_once(timeout = 0)
-      r, _, _ = IO.select(subscribers_ios, nil, nil, timeout)
-      r.each { |pipe| pipe.read(1) } if r
-
+    def spin_once
       results = @subscribers.map {|subscriber| subscriber.process_queue}
       results.include?(true)
     end
@@ -286,7 +282,6 @@ module ROS
 
       begin
         @subscribers.each do |subscriber|
-          subscriber.wakeup!
           @master.unregister_subscriber(subscriber.topic_name)
           subscriber.close
         end
@@ -418,9 +413,11 @@ module ROS
         @subscribers.select {|sub| sub.topic_name == topic}.each do |sub|
           publishers.select {|uri| not sub.has_connection_with?(uri)}.each do |uri|
             sub.add_connection(uri)
+            node_instance.wakeup!
           end
           sub.get_connected_uri.select {|uri| not publishers.include?(uri)}.each do |uri|
             sub.drop_connection(uri)
+            node_instance.wakeup!
           end
         end
         [1, "OK! Updated!!", 0]

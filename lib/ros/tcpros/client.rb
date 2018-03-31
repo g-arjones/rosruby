@@ -95,13 +95,10 @@ module ROS::TCPROS
     def shutdown
       @is_running = false
 
-      _rd = @rd
-      _wr = @wr
       @rd = nil
       @wr = nil
-      activity!
-      _rd.close
-      _wr.close
+      @rd.close
+      @wr.close
 
       if not @thread.join(0.1)
         Thread::kill(@thread)
