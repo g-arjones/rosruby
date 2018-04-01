@@ -36,6 +36,8 @@
   <run_depend>roslang</run_depend>
   <run_depend>gserver</run_depend>
   <run_depend>yard</run_depend>
+
+  <test_depend>roscpp_tutorials</test_depend>
   <export>
   </export>
 </package>
