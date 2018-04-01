@@ -14,7 +14,7 @@ module ROS
     proxy = XMLRPC::Client.new2(ENV['ROS_MASTER_URI']).proxy
     pid = nil
     begin
-      timeout(timeout_sec) do
+      Timeout.timeout(timeout_sec) do
         while not pid
           begin
             pid = proxy.getPid('/roscore')
