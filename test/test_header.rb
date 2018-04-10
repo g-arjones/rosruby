@@ -20,10 +20,10 @@ class TestParam_Normal < Test::Unit::TestCase
     assert_equal('5', header2['aa'])
 
     header3 = ROS::TCPROS::Header.new
-    header3['hoge'] = '1'
+    header3['hoge'] = '*'
 
     # wild_card
-    assert(header3.valid?('hoge', '*'))
+    assert(header3.valid?('hoge', '1'))
   end
 
   def test_check_string

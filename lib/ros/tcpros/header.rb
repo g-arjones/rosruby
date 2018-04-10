@@ -68,7 +68,7 @@ module ROS::TCPROS
     # @param [String] value
     # @return [Boolean] check result
     def valid?(key, value)
-      (@data[key] == value) or value == WILD_CARD
+      (@data[key] == value) or @data[key] == WILD_CARD
     end
 
     # serialize the data into header.
